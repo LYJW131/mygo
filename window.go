@@ -1229,6 +1229,19 @@ func (w *Window) SetMinimumSize(width, height int) {
 	w.do(func(n platform.Window) { n.SetMinimumSize(platform.Size{Width: width, Height: height}) })
 }
 
+// SetContentAspectRatio keeps the page area's width to its height at
+// width:height while the user resizes the window, as a video player keeps
+// its window at the video's shape; 0 for either lets the window take any
+// shape again. It does not resize the window: SetContentSize does. Only
+// macOS keeps the ratio; elsewhere it does nothing.
+func (w *Window) SetContentAspectRatio(width, height int) {
+	w.do(func(n platform.Window) {
+		if a, ok := n.(platform.AspectWindow); ok {
+			a.SetContentAspectRatio(width, height)
+		}
+	})
+}
+
 // SetMaximumSize limits how large the window can be resized; 0 means no
 // limit.
 func (w *Window) SetMaximumSize(width, height int) {

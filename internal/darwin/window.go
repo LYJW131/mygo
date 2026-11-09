@@ -828,6 +828,17 @@ func (w *window) SetMinimumSize(s platform.Size) {
 	msgSetSize(w.win, sel("setMinSize:"), NSSize{float64(s.Width), float64(s.Height)})
 }
 
+// SetContentAspectRatio keeps the content at width:height as the user
+// resizes the window. AppKit's ratio and resize increments exclude each
+// other: increments of one point give the window any shape again.
+func (w *window) SetContentAspectRatio(width, height int) {
+	if width <= 0 || height <= 0 {
+		msgSetSize(w.win, sel("setContentResizeIncrements:"), NSSize{1, 1})
+		return
+	}
+	msgSetSize(w.win, sel("setContentAspectRatio:"), NSSize{float64(width), float64(height)})
+}
+
 func (w *window) SetMaximumSize(s platform.Size) {
 	max := NSSize{math.MaxFloat32, math.MaxFloat32}
 	if s.Width > 0 {

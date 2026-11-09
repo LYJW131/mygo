@@ -261,6 +261,9 @@ Other properties:
   changes the material of a window created with one, and shows none in
   other windows. On Linux, a window keeps the shadow it was created with
   (`DisableShadow`).
+- `SetContentAspectRatio(w, h)` keeps the content at that shape while the
+  user resizes the window, as a video player's; `0, 0` frees it again. It
+  does not resize the window (`SetContentSize` does) (macOS).
 - `SetIcon(png)` gives the window its own icon in its title bar and taskbar
   button (Linux, Windows).
 - `SetSkipTaskbar` hides the window from the taskbar (Linux, Windows).

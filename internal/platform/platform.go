@@ -546,6 +546,15 @@ type UserScript struct {
 	AllFrames bool
 }
 
+// AspectWindow is a Window that can keep its content at an aspect ratio
+// as the user resizes it, as a video player's does. macOS's windows are.
+type AspectWindow interface {
+	// SetContentAspectRatio keeps the content's width to its height at
+	// width:height as the user resizes the window; 0 for either lets the
+	// window take any shape again.
+	SetContentAspectRatio(width, height int)
+}
+
 // Window is a native window hosting a webview.
 type Window interface {
 	// Handle returns the native window (NSWindow*, GtkWindow*, HWND).
