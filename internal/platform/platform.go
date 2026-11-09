@@ -393,6 +393,9 @@ type WindowOptions struct {
 	Fullscreenable bool
 	AlwaysOnTop    bool
 	FullScreen     bool
+	// LiveFullScreen animates going into and out of full screen by
+	// resizing the window, whose content keeps drawing (macOS).
+	LiveFullScreen bool
 	Maximized      bool
 	SkipTaskbar    bool
 	AutoHideMenu   bool

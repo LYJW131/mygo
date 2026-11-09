@@ -134,6 +134,12 @@ type WindowOptions struct {
 	DisableShadow     bool
 	AlwaysOnTop       bool
 	FullScreen        bool
+	// LiveFullScreen animates the window into and out of full screen by
+	// resizing it, so its content keeps drawing all along: a video keeps
+	// playing. Without it, macOS animates a picture of the window, which
+	// stands still for the half second the transition takes. macOS only;
+	// elsewhere it changes nothing.
+	LiveFullScreen bool
 	// Maximized creates the window maximized.
 	Maximized bool
 	// SkipTaskbar hides the window from the taskbar (Linux, Windows).
@@ -714,6 +720,7 @@ func (w *Window) platformOptions(o *WindowOptions) *platform.WindowOptions {
 		Fullscreenable:    !o.DisableFullScreen,
 		AlwaysOnTop:       o.AlwaysOnTop,
 		FullScreen:        o.FullScreen,
+		LiveFullScreen:    o.LiveFullScreen,
 		Maximized:         o.Maximized,
 		SkipTaskbar:       o.SkipTaskbar,
 		AutoHideMenu:      o.AutoHideMenuBar,

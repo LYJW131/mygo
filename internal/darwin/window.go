@@ -104,6 +104,9 @@ type window struct {
 	onTop            bool
 	attached         bool
 	childrenAttached bool
+	// liveFrame is where a window with LiveFullScreen was as it went into
+	// full screen, which it animates back to as it leaves.
+	liveFrame NSRect
 	// flyout is how a flyout (WindowOptions.Flyout) was placed last, at
 	// flyoutSize.
 	flyout     platform.Flyout
@@ -2470,6 +2473,7 @@ func registerWindowClasses() {
 			}),
 			method("windowDidFailToEnterFullScreen:", func(self id, _ objc.SEL, win id) {
 				if w := b().windowFor(self); w != nil {
+					w.restoreLiveFrame()
 					w.leftFullScreen()
 				}
 			}),
@@ -2481,8 +2485,41 @@ func registerWindowClasses() {
 					}
 				}
 			}),
+			// LiveFullScreen: the window animates its own frame, so its
+			// content keeps drawing, where AppKit would animate a picture
+			// of it. Other windows get AppKit's animation (nil).
+			method("customWindowsToEnterFullScreenForWindow:", func(self id, _ objc.SEL, win id) id {
+				if w := b().windowFor(self); w != nil && w.opts.LiveFullScreen {
+					w.liveFrame = msgRect(win, sel("frame"))
+					return send(class("NSArray"), "arrayWithObject:", uintptr(win))
+				}
+				return 0
+			}),
+			method("customWindowsToExitFullScreenForWindow:", func(self id, _ objc.SEL, win id) id {
+				if w := b().windowFor(self); w != nil && w.opts.LiveFullScreen && w.liveFrame.Size.Width > 0 {
+					return send(class("NSArray"), "arrayWithObject:", uintptr(win))
+				}
+				return 0
+			}),
+			method("window:startCustomAnimationToEnterFullScreenWithDuration:", func(self id, _ objc.SEL, win id, d float64) {
+				screen := send(win, "screen")
+				if screen == 0 {
+					screen = send(class("NSScreen"), "mainScreen")
+				}
+				send(win, "setStyleMask:", uintptr(send(win, "styleMask"))|styleFullScreen)
+				animateFrame(win, msgRect(screen, sel("frame")), d)
+			}),
+			method("window:startCustomAnimationToExitFullScreenWithDuration:", func(self id, _ objc.SEL, win id, d float64) {
+				w := b().windowFor(self)
+				if w == nil {
+					return
+				}
+				send(win, "setStyleMask:", uintptr(send(win, "styleMask"))&^styleFullScreen)
+				animateFrame(win, w.liveFrame, d)
+			}),
 			method("windowDidExitFullScreen:", func(self id, _ objc.SEL, n id) {
 				if w := b().windowFor(self); w != nil {
+					w.restoreLiveFrame()
 					w.leftFullScreen()
 					w.layoutTrafficLights()
 					w.h.LeftFullScreen()
@@ -2765,4 +2802,32 @@ func (w *window) loadFailed(err id, fallback string) {
 		url = fallback
 	}
 	w.h.LoadFailed(url, code, desc)
+}
+
+// animateFrame moves and resizes win to frame over d seconds, through its
+// animator: AppKit sets the frame at each step, so the content lays out and
+// draws at each size.
+func animateFrame(win id, frame NSRect, d float64) {
+	ctx := class("NSAnimationContext")
+	send(ctx, "beginGrouping")
+	msgSetFloat(send(ctx, "currentContext"), sel("setDuration:"), d)
+	msgSetRectBool(send(win, "animator"), sel("setFrame:display:"), frame, true)
+	send(ctx, "endGrouping")
+}
+
+// restoreLiveFrame puts a window with LiveFullScreen back where it was
+// before full screen, once it is out of it, when AppKit left it elsewhere:
+// it skips the custom animation for a window that does not show (on
+// another Space, say), and then keeps the full-screen frame.
+func (w *window) restoreLiveFrame() {
+	if !w.opts.LiveFullScreen || w.liveFrame.Size.Width == 0 {
+		return
+	}
+	if mask := uintptr(send(w.win, "styleMask")); mask&styleFullScreen != 0 {
+		send(w.win, "setStyleMask:", mask&^styleFullScreen)
+	}
+	if msgRect(w.win, sel("frame")) != w.liveFrame {
+		msgSetRectBool(w.win, sel("setFrame:display:"), w.liveFrame, true)
+	}
+	w.liveFrame = NSRect{}
 }
