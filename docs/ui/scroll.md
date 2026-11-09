@@ -15,6 +15,13 @@ over; a touchpad follows the fingers, as a finger dragged on a
 touchscreen does on Linux, and while the desktop asks for less
 motion, a notch scrolls at once.
 
+A touchpad's gesture scrolls along the axis it mostly goes, as AppKit's
+and the browsers' do: a page scrolling down over a row that scrolls
+sideways goes down, and the row moves only under a swipe sideways. The
+momentum after the fingers keeps that axis. A container that scrolls both
+ways (`ScrollBoth`) and an element's own input handler get the gesture as
+it is.
+
 ```go
 ui.Scroll(c).Grow(1).Padding(16).Gap(12).Children(func() {
 	for _, p := range app.posts {

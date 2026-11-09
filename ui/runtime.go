@@ -103,6 +103,9 @@ type host interface {
 // the view function, lays them out, paints them and routes input to the
 // elements of the last frame. Main thread only, except where noted.
 type engine struct {
+	// scrollAxis locks a touchpad's gesture to one axis (scroll).
+	scrollAxis axisLock
+
 	// inlineRects is placeInline's scratch, kept from frame to frame.
 	inlineRects []text.Rect
 	// byPosition holds the keys whose press stood for its physical key

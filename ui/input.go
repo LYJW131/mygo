@@ -101,7 +101,7 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 		}
 	case platform.PointerScroll:
 		rt.pointerMove(x, y)
-		rt.scroll(float32(ev.DX), float32(ev.DY), Modifiers(ev.Mods), ev.Precise, ev.Momentum)
+		rt.scroll(float32(ev.DX), float32(ev.DY), Modifiers(ev.Mods), ev.Precise, ev.Momentum, ev.Began)
 	case platform.PointerZoom:
 		rt.pointerMove(x, y)
 		rt.zoom(float32(ev.Scale), Modifiers(ev.Mods))
@@ -790,7 +790,7 @@ func (s *state) quietClick(mods Modifiers) {
 	s.click(mods)
 }
 
-func (rt *engine) scroll(dx, dy float32, mods Modifiers, precise, momentum bool) {
+func (rt *engine) scroll(dx, dy float32, mods Modifiers, precise, momentum, began bool) {
 	chain := rt.appendHitChain(rt.chain[:0], rt.pointerX, rt.pointerY)
 	rt.chain = chain[:0]
 	// From the innermost element out, the first handling its input to
@@ -814,12 +814,24 @@ func (rt *engine) scroll(dx, dy float32, mods Modifiers, precise, momentum bool)
 	// A wheel's notches glide, as browsers scroll them; a touchpad's
 	// small moves already follow the fingers.
 	glide := !precise && !rt.preferences().ReduceMotion
+	// A touchpad's gesture scrolls along one axis, as AppKit's and the
+	// browsers' do, so that a page scrolling down over a row that scrolls
+	// sideways goes down rather than nudging the row: containers that
+	// scroll both ways take it as it is.
+	lx, ly := dx, dy
+	if precise {
+		lx, ly = rt.scrollAxis.lock(rt.now(), dx, dy, momentum, began)
+	}
 	for _, id := range chain {
 		s := rt.states[id]
 		if s == nil {
 			continue
 		}
-		sx, sy := s.vector(rt.pointerX, rt.pointerY, dx, dy)
+		ex, ey := lx, ly
+		if s.flags&(flagScrollX|flagScrollY) == flagScrollX|flagScrollY {
+			ex, ey = dx, dy
+		}
+		sx, sy := s.vector(rt.pointerX, rt.pointerY, ex, ey)
 		if sideways && s.rtl {
 			sx = -sx
 		}
@@ -850,6 +862,50 @@ func (rt *engine) scroll(dx, dy float32, mods Modifiers, precise, momentum bool)
 			return
 		}
 	}
+}
+
+// axisLock is the axis a touchpad's gesture scrolls along: none until
+// its first few DIPs say which way it goes most, then that one until the
+// gesture ends (a new gesture begins, or the scrolling pauses).
+type axisLock struct {
+	axis uint8 // 0 not yet known, 1 sideways, 2 up and down
+	last time.Time
+	sumX float32
+	sumY float32
+}
+
+const (
+	// axisLockAfter is how far a gesture goes before its axis is locked.
+	axisLockAfter = 4
+	// axisLockGap is how long a pause ends a gesture where the platform
+	// does not say where one begins.
+	axisLockGap = 150 * time.Millisecond
+)
+
+// lock returns dx, dy along the gesture's axis.
+func (l *axisLock) lock(now time.Time, dx, dy float32, momentum, began bool) (float32, float32) {
+	if began || (!momentum && now.Sub(l.last) > axisLockGap) {
+		*l = axisLock{}
+	}
+	l.last = now
+	if l.axis == 0 {
+		l.sumX += abs32(dx)
+		l.sumY += abs32(dy)
+		if l.sumX+l.sumY >= axisLockAfter {
+			l.axis = 2
+			if l.sumX > l.sumY {
+				l.axis = 1
+			}
+		}
+		if l.sumX > l.sumY {
+			return dx, 0
+		}
+		return 0, dy
+	}
+	if l.axis == 1 {
+		return dx, 0
+	}
+	return 0, dy
 }
 
 // zoom gives a pinch to the element under the pointer that handles its

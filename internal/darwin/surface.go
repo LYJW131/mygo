@@ -800,12 +800,17 @@ func scrollWheel(s *surface, ev id) {
 	dx, dy := msgFloat(ev, sel("scrollingDeltaX")), msgFloat(ev, sel("scrollingDeltaY"))
 	precise := sendBool(ev, "hasPreciseScrollingDeltas")
 	momentum := sendInt(ev, "momentumPhase") != 0
+	began := sendInt(ev, "phase")&nsEventPhaseBegan != 0
 	if !precise {
 		// A mouse wheel scrolls by lines: 40 DIPs, as in browsers.
 		dx, dy = dx*40, dy*40
 	}
-	s.send(platform.SurfaceEvent{Kind: platform.PointerScroll, X: x, Y: y, DX: -dx, DY: -dy, Precise: precise, Momentum: momentum, Mods: eventMods(ev)})
+	s.send(platform.SurfaceEvent{Kind: platform.PointerScroll, X: x, Y: y, DX: -dx, DY: -dy, Precise: precise, Momentum: momentum, Began: began, Mods: eventMods(ev)})
 }
+
+// nsEventPhaseBegan is NSEventPhaseBegan, the phase of a gesture's first
+// scroll.
+const nsEventPhaseBegan = 1
 
 func eventMods(ev id) platform.Modifiers {
 	flags := uint(send(ev, "modifierFlags"))
