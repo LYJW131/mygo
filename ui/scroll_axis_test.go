@@ -49,3 +49,23 @@ func TestTouchpadGestureKeepsItsAxis(t *testing.T) {
 		t.Errorf("momentum of the sideways swipe: row at %v, page at %v; want 123 and 0", row.X, page.Y)
 	}
 }
+
+// An element's input handler hears where a gesture begins and whether the
+// system turned it around, for a swipe that is not content moving.
+func TestScrollEventCarriesPhaseAndDirection(t *testing.T) {
+	var got []InputEvent
+	tt := coreNewTester(func(c *context) {
+		coreBox(c).Fill().HandleInput(func(ev InputEvent) bool {
+			if ev.Kind == InputScroll {
+				got = append(got, ev)
+			}
+			return true
+		})
+	}, 200, 200)
+	tt.Move(100, 100)
+	tt.send(platform.SurfaceEvent{Kind: platform.PointerScroll, X: 100, Y: 100, DY: 5, Precise: true, Began: true, Inverted: true})
+	tt.send(platform.SurfaceEvent{Kind: platform.PointerScroll, X: 100, Y: 100, DY: 5, Precise: true})
+	if len(got) != 2 || !got[0].Began || !got[0].Inverted || got[1].Began || got[1].Inverted {
+		t.Fatalf("scroll events %+v", got)
+	}
+}

@@ -403,6 +403,9 @@ type SurfaceEvent struct {
 	Precise  bool
 	Momentum bool
 	Began    bool
+	// Inverted is a scroll the system turned around for the content
+	// (NSEvent isDirectionInvertedFromDevice, macOS's natural scrolling).
+	Inverted bool
 	// Scale is PointerZoom's.
 	Scale float64
 	// Pointer is the device of PointerMove, PointerDown and PointerUp, as

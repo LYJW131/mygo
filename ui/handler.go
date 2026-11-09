@@ -116,10 +116,19 @@ type InputEvent struct {
 	Pointer  PointerType
 	Pressure float32
 	// DX and DY are what InputScroll scrolls by, in local axes; positive DY moves the view
-	// down the content.
+	// down the content. Precise marks a touchpad's (or another device
+	// scrolling by pixels), Momentum the scrolling that goes on after the
+	// fingers leave it, and Began the first scroll of the fingers'
+	// gesture, where the system tells it. Inverted says that the system
+	// turns the fingers' direction around for the content, as macOS's
+	// natural scrolling does: an element that maps a swipe to something
+	// other than moving content, as a player's volume, flips DY back so
+	// that swiping up raises it either way.
 	DX, DY   float32
 	Precise  bool
 	Momentum bool
+	Began    bool
+	Inverted bool
 	// Scale is what InputZoom zooms by.
 	Scale float32
 	// Start and End are the runes InputSelect selects.
