@@ -42,6 +42,7 @@ type headless struct {
 	// titleDoubles counts the double clicks a DragWindow handle left to
 	// the window.
 	titleDoubles int
+	windowDrags  int
 	openErr      error
 	// clipboardErr fails the writes of text to the clipboard
 	// (FailClipboard).
@@ -117,7 +118,7 @@ func (h *headless) repaintTimer(at time.Time)                  { h.repaintAt = a
 func (h *headless) setCursor(c Cursor)                         { h.cursor = c }
 func (h *headless) setTextInput(t platform.TextInputState)     { h.ime = t }
 func (h *headless) updateAccessibility(t *platform.AccessTree) { h.keepAccess(t) }
-func (h *headless) startDrag()                                 {}
+func (h *headless) startDrag()                                 { h.windowDrags++ }
 func (h *headless) setDropFormats([]transfer.Format)           {}
 func (h *headless) readClipboard() string {
 	if r := h.reading; r != nil {

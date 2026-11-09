@@ -398,6 +398,9 @@ type node struct {
 	// handleDoubleClick marks a DragWindow handle whose double click the
 	// view takes (WindowDoubleClicked) rather than the window.
 	handleDoubleClick bool
+	// dragWindowOnMove marks an element whose presses that move drag the
+	// window (DragWindowOnMove).
+	dragWindowOnMove bool
 	// accessHidden leaves it and the elements inside it out of what
 	// assistive technology reads, while they still show and take input
 	// (AccessHidden).
@@ -1986,6 +1989,12 @@ func (e *node) TabStop(stop bool) *node {
 // title bar of a frameless window. A double click on it maximizes the
 // window, as on a title bar.
 func (e *node) DragWindow() *node { e.flags |= flagDragWindow; return e }
+
+// DragWindowOnMove makes a press on the element that moves drag the
+// window, as the picture of a video player does, while presses that stay
+// put still click it and double-click it: the press stops being one, with
+// no click, once it moves past a few DIPs.
+func (e *node) DragWindowOnMove() *node { e.dragWindowOnMove = true; return e }
 
 // WindowDoubleClicked reports a double click on a DragWindow handle,
 // which then no longer maximizes the window: the view does what a double

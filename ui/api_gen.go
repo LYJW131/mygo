@@ -4798,6 +4798,20 @@ func (_handle Element) DragWindow() Element {
 	return wrapElement(_node.DragWindow())
 }
 
+// DragWindowOnMove makes a press on the element that moves drag the
+// window, as the picture of a video player does, while presses that stay
+// put still click it and double-click it: the press stops being one, with
+// no click, once it moves past a few DIPs.
+func (_handle Element) DragWindowOnMove() Element {
+	_node := _handle.node()
+	if _node == nil {
+		return Element{}
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return wrapElement(_node.DragWindowOnMove())
+}
+
 // Draggable lets the pointer move the element from its place in the
 // layout, by *offset, and returns the element. As the pointer drags it,
 // the element follows the pointer, along its parent's axes, and *offset

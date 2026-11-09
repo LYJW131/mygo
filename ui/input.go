@@ -371,6 +371,14 @@ func (rt *engine) pointerMove(x, y float32) {
 		rt.pressed.dragX += dx
 		rt.pressed.dragY += dy
 		rt.pressed.drag.move(rt.now(), dx, dy, x-rt.pointerX, y-rt.pointerY)
+		if p := rt.pressed; p.dragWindowOnMove && rt.pressButton == 0 && p.dragX*p.dragX+p.dragY*p.dragY > dragWindowAfter*dragWindowAfter {
+			// The press drags the window now, and clicks nothing.
+			lx, ly := p.local(x, y)
+			rt.endPress(p.input, lx, ly)
+			rt.host.startDrag()
+			rt.pointerX, rt.pointerY = x, y
+			return
+		}
 		if rt.pressed.flags&(flagTrackPointer|flagDraggable|flagEditable|flagSelectable) != 0 {
 			rt.requestFrame()
 		} else {
@@ -863,6 +871,10 @@ func (rt *engine) scroll(dx, dy float32, mods Modifiers, precise, momentum, bega
 		}
 	}
 }
+
+// dragWindowAfter is how far a press on a DragWindowOnMove element goes
+// before it drags the window.
+const dragWindowAfter = 4
 
 // axisLock is the axis a touchpad's gesture scrolls along: none until
 // its first few DIPs say which way it goes most, then that one until the

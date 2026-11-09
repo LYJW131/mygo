@@ -725,6 +725,9 @@ type state struct {
 	// handleDoubleClick tells that the element, a DragWindow handle,
 	// takes its double click (WindowDoubleClicked).
 	handleDoubleClick bool
+	// dragWindowOnMove tells that a press on the element that moves drags
+	// the window rather than clicking it (DragWindowOnMove).
+	dragWindowOnMove bool
 	// activeDescendant is the element that has the keyboard focus while
 	// this one does (ActiveDescendant), 0 for none.
 	activeDescendant uint64

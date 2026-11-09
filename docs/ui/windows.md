@@ -51,6 +51,17 @@ if side.WindowDoubleClicked() {
 }
 ```
 
+`DragWindowOnMove` makes an element that takes clicks drag the window too,
+as the picture of a video player: a press that stays put clicks it, and
+one that moves past a few DIPs drags the window and clicks nothing.
+
+```go
+picture := ui.Box(c).Fill().DragWindowOnMove()
+if picture.Clicked() {
+	app.togglePause()
+}
+```
+
 To draw the window controls too, where the view wants them, add
 `HideWindowButtons: true` to the hidden title bar: the system's controls go,
 `c.TitleBar()` is zero, and the window keeps its title bar's edges, which
